@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Sale & Expence</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0e0e0e;--card:#1a1a1a;--card2:#222;--border:#2a2a2a;--fg:#f0f0f0;--muted:#888;--gold:#f0a500;--green:#2ecc71;--red:#e74c3c;--blue:#3498db}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--fg);min-height:100vh;padding-bottom:85px;-webkit-tap-highlight-color:transparent}
+
+/* Top Bar */
+.top{background:linear-gradient(135deg,#1a1a1a,#222);padding:16px 20px;border-bottom:2px solid var(--gold);position:sticky;top:0;z-index:50;display:flex;justify-content:space-between;align-items:center}
+.top h1{font-size:1.2rem;font-weight:800;color:var(--gold);display:flex;align-items:center;gap:8px}
+.top-right{font-size:0.72rem;color:var(--muted);text-align:right}
+
+/* Tabs */
+.tabs{display:flex;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:54px;z-index:49}
+.tab{flex:1;padding:12px 4px;text-align:center;font-size:0.65rem;font-weight:600;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;transition:.2s}
+.tab.on{color:var(--gold);border-bottom-color:var(--gold)}
+.tab i{display:block;font-size:1.1rem;margin-bottom:3px}
+
+/* Pages */
+.pg{display:none;padding:14px;animation:up .25s ease}
+.pg.on{display:block}
+@keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Boxes */
+.big-box{text-align:center;padding:18px;background:var(--card);border-radius:14px;border:1px solid var(--border);margin-bottom:12px}
+.big-box .lbl{font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.big-box .val{font-size:1.8rem;font-weight:800;margin-top:2px}
+.green{color:var(--green)}.red{color:var(--red)}.gold{color:var(--gold)}.blue{color:var(--blue)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+
+/* Buttons */
+.btn{padding:12px 20px;border:none;border-radius:10px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s;width:100%}
+.btn:active{transform:scale(0.97)}
+.btn-gold{background:var(--gold);color:#000}
+.btn-green{background:var(--green);color:#fff}
+.btn-red{background:var(--red);color:#fff}
+.btn-dark{background:var(--border);color:var(--fg)}
+
+/* Inputs */
+.inp{width:100%;padding:12px 14px;background:#0a0a0a;border:1px solid var(--border);border-radius:10px;color:var(--fg);font-size:0.95rem;font-family:'Outfit',sans-serif;outline:none;margin-bottom:10px}
+.inp:focus{border-color:var(--gold)}
+.inp-half{width:100%;padding:10px 12px;background:#0a0a0a;border:1px solid var(--border);border-radius:8px;color:var(--fg);font-size:0.9rem;font-family:'Outfit',sans-serif;outline:none;text-align:center}
+.inp-half:focus{border-color:var(--gold)}
+
+/* Card */
+.crd{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px}
+.crd h3{font-size:0.85rem;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.crd h3 i{color:var(--gold)}
+.crd-sale{border-left:4px solid var(--green)}
+.crd-exp{border-left:4px solid var(--red)}
+
+/* Denomination Row */
+.d-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.d-lbl{font-weight:700;font-size:0.85rem;color:var(--gold);min-width:55px}
+.d-inp{width:55px;padding:8px 4px;background:#0a0a0a;border:1px solid var(--border);border-radius:8px;color:var(--fg);font-size:0.9rem;text-align:center;outline:none;font-family:'Outfit',sans-serif}
+.d-inp:focus{border-color:var(--gold)}
+.d-eq{font-size:0.72rem;color:var(--muted)}
+
+/* Transaction Item */
+.tx{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.tx:last-child{border:none}
+.tx-l{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.tx-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.tx-dot.s{background:var(--green)}.tx-dot.e{background:var(--red)}.tx-dot.d{background:var(--blue)}
+.tx-name{font-size:0.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-sub{font-size:0.66rem;color:var(--muted)}
+.tx-rs{font-weight:700;font-size:0.85rem;flex-shrink:0;margin-left:8px}
+.tx-x{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px 6px;font-size:0.75rem;border-radius:6px;flex-shrink:0}
+.tx-x:hover{color:var(--red);background:rgba(231,76,60,.1)}
+
+/* Contact Item */
+.ct{display:flex;align-items:center;justify-content:space-between;padding:12px;background:#0a0a0a;border-radius:10px;margin-bottom:8px;gap:8px}
+.ct-info{flex:1;min-width:0}
+.ct-name{font-weight:700;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ct-num{font-size:0.75rem;color:var(--muted)}
+.ct-btns{display:flex;gap:5px;flex-shrink:0}
+.ct-btns a,.ct-btns button{padding:7px 9px;border-radius:8px;border:none;font-size:0.72rem;cursor:pointer;text-decoration:none;color:#fff;font-family:'Outfit',sans-serif;font-weight:600;display:flex;align-items:center;justify-content:center}
+.wa{background:#25D366}.ca{background:var(--blue)}.de{background:var(--border);color:var(--red)}
+
+/* Search */
+.search{display:flex;align-items:center;background:#0a0a0a;border:1px solid var(--border);border-radius:10px;padding:0 12px;margin-bottom:12px}
+.search i{color:var(--muted);margin-right:8px}
+.search input{flex:1;background:none;border:none;color:var(--fg);padding:11px 0;font-size:0.9rem;outline:none;font-family:'Outfit',sans-serif}
+
+/* History Day */
+.h-day{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
+.h-date{font-weight:700;font-size:0.85rem;color:var(--gold);margin-bottom:8px}
+.h-row{display:flex;justify-content:space-between;font-size:0.78rem;padding:3px 0;color:var(--muted)}
+
+/* Toast */
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:10px;font-size:0.82rem;font-weight:600;color:#fff;z-index:999;animation:tin .3s ease,tout .3s ease 2s forwards;pointer-events:none;white-space:nowrap;box-shadow:0 4px 15px rgba(0,0,0,.4)}
+.toast.ok{background:var(--green)}.toast.err{background:var(--red)}.toast.inf{background:#444}
+@keyframes tin{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%)}}
+@keyframes tout{to{opacity:0}}
+
+.empty{text-align:center;padding:24px;color:var(--muted);font-size:0.82rem}
+.empty i{font-size:1.8rem;display:block;margin-bottom:6px;color:var(--border)}
+
+.tag{font-size:0.6rem;padding:2px 6px;border-radius:4px;font-weight:700;text-transform:uppercase}
+.tag-s{background:rgba(46,204,113,.15);color:var(--green)}
+.tag-e{background:rgba(231,76,60,.15);color:var(--red)}
+.tag-d{background:rgba(52,152,219,.15);color:var(--blue)}
+
+/* Digital summary row */
+.dig-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+.dig-row:last-child{border:none}
+.dig-lbl{font-size:0.8rem;color:var(--muted)}
+.dig-val{font-weight:700;font-size:0.85rem}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <h1><i class="fas fa-store"></i> SALE & EXPENCE</h1>
+  <div class="top-right" id="dateLabel"></div>
+</div>
+
+<div class="tabs">
+  <button class="tab on" data-p="home"><i class="fas fa-home"></i>Home</button>
+  <button class="tab" data-p="cash"><i class="fas fa-coins"></i>Cash</button>
+  <button class="tab" data-p="phone"><i class="fas fa-phone"></i>Contacts</button>
+  <button class="tab" data-p="hist"><i class="fas fa-calendar"></i>History</button>
+</div>
+
+<!-- ===== HOME ===== -->
+<div class="pg on" id="pg-home">
+
+  <div class="crd crd-sale">
+    <h3 style="color:var(--green)"><i class="fas fa-plus-circle" style="color:var(--green)"></i> Add Sale</h3>
+    <input class="inp" type="number" id="saleAmt" placeholder="Amount (Rs)">
+    <input class="inp" type="text" id="saleNote" placeholder="Item sold (e.g. Chicken Biryani)">
+    <button class="btn btn-green" onclick="addTx('sale')"><i class="fas fa-plus"></i> Add Sale</button>
+  </div>
+
+  <div class="crd crd-exp">
+    <h3 style="color:var(--red)"><i class="fas fa-minus-circle" style="color:var(--red)"></i> Add Expense</h3>
+    <input class="inp" type="number" id="expAmt" placeholder="Amount (Rs)">
+    <input class="inp" type="text" id="expNote" placeholder="What did you buy? (e.g. Oil, Gas)">
+    <button class="btn btn-red" onclick="addTx('expense')"><i class="fas fa-minus"></i> Add Expense</button>
+  </div>
+
+  <div class="row2">
+    <div class="big-box"><div class="lbl">Total Sale</div><div class="val green" id="dSale">0</div></div>
+    <div class="big-box"><div class="lbl">Total Expense</div><div class="val red" id="dExp">0</div></div>
+  </div>
+  <div class="big-box" style="border-color:var(--gold)"><div class="lbl">Net Profit (Sale - Expense)</div><div class="val gold" id="dProfit">0</div></div>
+
+  <div class="crd">
+    <h3><i class="fas fa-list"></i> Today's Entries</h3>
+    <div id="txList"><div class="empty"><i class="fas fa-receipt"></i>No entries yet</div></div>
+  </div>
+</div>
+
+<!-- ===== CASH COUNTER ===== -->
+<div class="pg" id="pg-cash">
+  <div class="crd">
+    <h3><i class="fas fa-money-bill-wave"></i> Count Cash Notes</h3>
+    <p style="font-size:0.7rem;color:var(--muted);margin-bottom:10px">Enter quantity of each note</p>
+    <div id="denomArea"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0 4px;border-top:1px solid var(--border);margin-top:8px">
+      <span style="font-weight:700">Cash Total</span>
+      <span style="font-weight:800;font-size:1.3rem;color:var(--gold)" id="cashSum">Rs 0</span>
+    </div>
+  </div>
+
+  <div class="crd">
+    <h3><i class="fas fa-mobile-alt"></i> Digital Payments</h3>
+    <p style="font-size:0.7rem;color:var(--muted);margin-bottom:10px">Auto-added to today's sale when saved</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px">
+      <div><div style="font-size:0.65rem;color:var(--muted);margin-bottom:3px;text-align:center">EasyPaisa</div><input class="inp-half" type="number" id="valEP" placeholder="0" oninput="calcCash()"></div>
+      <div><div style="font-size:0.65rem;color:var(--muted);margin-bottom:3px;text-align:center">JazzCash</div><input class="inp-half" type="number" id="valJC" placeholder="0" oninput="calcCash()"></div>
+      <div><div style="font-size:0.65rem;color:var(--muted);margin-bottom:3px;text-align:center">Bank</div><input class="inp-half" type="number" id="valBank" placeholder="0" oninput="calcCash()"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--border);margin-bottom:8px">
+      <span style="font-weight:700;color:var(--blue)">Digital Total</span>
+      <span style="font-weight:800;font-size:1rem;color:var(--blue)" id="digitalSum">Rs 0</span>
+    </div>
+    <button class="btn btn-gold" onclick="saveDigital()"><i class="fas fa-save"></i> Save & Add to Sale</button>
+  </div>
+
+  <div class="big-box" style="border-color:var(--gold)">
+    <div class="lbl">Total Money (Cash + Digital)</div>
+    <div class="val gold" id="grandTotal">Rs 0</div>
+  </div>
+
+  <div class="crd">
+    <h3><i class="fas fa-balance-scale"></i> Difference Check</h3>
+    <p style="font-size:0.7rem;color:var(--muted);margin-bottom:10px">Your counted money vs recorded profit</p>
+    <div class="dig-row"><span class="dig-lbl">Counted Money</span><span class="dig-val gold" id="diffCounted">Rs 0</span></div>
+    <div class="dig-row"><span class="dig-lbl">Expected (Sale - Expense)</span><span class="dig-val" id="diffExpected">Rs 0</span></div>
+    <div class="dig-row" style="border:none;padding-top:10px;border-top:2px solid var(--border)">
+      <span style="font-weight:700">Difference</span>
+      <span style="font-weight:800;font-size:1.1rem" id="cashDiff">Rs 0</span>
+    </div>
+    <p style="font-size:0.65rem;color:var(--muted);margin-top:6px"><span style="color:var(--green)">Green</span> = Extra cash found &nbsp; <span style="color:var(--red)">Red</span> = Cash missing</p>
+  </div>
+</div>
+
+<!-- ===== CONTACTS ===== -->
+<div class="pg" id="pg-phone">
+  <div class="crd">
+    <h3><i class="fas fa-user-plus"></i> Add Contact</h3>
+    <input class="inp" type="text" id="cName" placeholder="Name (e.g. Chicken supplier)">
+    <input class="inp" type="tel" id="cPhone" placeholder="Phone (e.g. 03002546125)">
+    <button class="btn btn-gold" onclick="addContact()"><i class="fas fa-plus"></i> Save Contact</button>
+    <div style="font-size:0.68rem;color:var(--muted);text-align:right;margin-top:6px" id="cCount">0 / 50</div>
+  </div>
+  <div class="search">
+    <i class="fas fa-search"></i>
+    <input type="text" id="cSearch" placeholder="Search name or number..." oninput="showContacts()">
+  </div>
+  <div id="cList"><div class="empty"><i class="fas fa-address-book"></i>No contacts yet</div></div>
+</div>
+
+<!-- ===== HISTORY ===== -->
+<div class="pg" id="pg-hist">
+  <div class="crd">
+    <h3><i class="fas fa-file-pdf"></i> Download Report</h3>
+    <button class="btn btn-gold" onclick="dlPDF()" style="margin-bottom:8px"><i class="fas fa-download"></i> Download Today PDF</button>
+    <p style="font-size:0.68rem;color:var(--muted)">Saves today's full report as PDF file</p>
+  </div>
+  <div class="crd">
+    <h3><i class="fas fa-calendar-alt"></i> Past Days</h3>
+    <div id="hList"><div class="empty"><i class="fas fa-calendar"></i>No history yet</div></div>
+  </div>
+</div>
+
+<script>
+const K={tx:'dc_tx2',ct:'dc_ct2',dg:'dc_dg2'};
+const load=k=>{try{return JSON.parse(localStorage.getItem(k))||[]}catch{return[]}};
+const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const today=()=>new Date().toISOString().split('T')[0];
+const rs=n=>'Rs '+(n||0).toLocaleString();
+
+document.getElementById('dateLabel').textContent=new Date().toLocaleDateString('en-PK',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+
+// Tabs
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on');
+  document.getElementById('pg-'+t.dataset.p).classList.add('on');
+  if(t.dataset.p==='hist')showHistory();
+  if(t.dataset.p==='cash'){loadDigital();calcCash()}
+});
+
+function toast(m,t='inf'){const d=document.createElement('div');d.className='toast '+t;d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),2500)}
+
+// ===== HOME: Add Transaction =====
+function addTx(type){
+  const amtId=type==='sale'?'saleAmt':'expAmt';
+  const noteId=type==='sale'?'saleNote':'expNote';
+  const amt=parseFloat(document.getElementById(amtId).value);
+  const note=document.getElementById(noteId).value.trim();
+  if(!amt||amt<=0){toast('Enter amount','err');return}
+  if(!note){toast('Enter description','err');return}
+  const txs=load(K.tx);
+  txs.unshift({id:Date.now(),type,amount:amt,note,date:today(),time:new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'})});
+  save(K.tx,txs);
+  document.getElementById(amtId).value='';
+  document.getElementById(noteId).value='';
+  toast((type==='sale'?'Sale':'Expense')+' of '+rs(amt)+' added','ok');
+  renderHome();
+}
+
+function delTx(id){save(K.tx,load(K.tx).filter(t=>t.id!==id));renderHome();toast('Deleted','inf')}
+
+function renderHome(){
+  const txs=load(K.tx).filter(t=>t.date===today());
+  const sales=txs.filter(t=>t.type==='sale').reduce((s,t)=>s+t.amount,0);
+  const exps=txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  document.getElementById('dSale').textContent=rs(sales);
+  document.getElementById('dExp').textContent=rs(exps);
+  document.getElementById('dProfit').textContent=rs(sales-exps);
+
+  const el=document.getElementById('txList');
+  if(!txs.length){el.innerHTML='<div class="empty"><i class="fas fa-receipt"></i>No entries yet</div>';return}
+  el.innerHTML=txs.map(t=>{
+    const isSale=t.type==='sale';
+    const isDig=t.source==='digital';
+    return `<div class="tx">
+      <div class="tx-l">
+        <div class="tx-dot ${isSale?(isDig?'d':'s'):'e'}"></div>
+        <div style="min-width:0">
+          <div class="tx-name">${isDig?'<span class="tag tag-d">DIGITAL</span> ':''}${t.note}</div>
+          <div class="tx-sub">${t.time}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:4px">
+        <span class="tx-rs ${isSale?'green':'red'}">${isSale?'+':'-'}${rs(t.amount)}</span>
+        <button class="tx-x" onclick="delTx(${t.id})"><i class="fas fa-times"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ===== CASH COUNTER =====
+const denoms=[{l:'5000',v:5000},{l:'1000',v:1000},{l:'500',v:500},{l:'100',v:100},{l:'50',v:50},{l:'20',v:20},{l:'10',v:10},{l:'5',v:5},{l:'2',v:2},{l:'1',v:1}];
+
+document.getElementById('denomArea').innerHTML=denoms.map((d,i)=>`<div class="d-row">
+  <span class="d-lbl">${d.l}</span><span class="d-eq">x</span>
+  <input class="d-inp" type="number" id="dn${i}" placeholder="0" min="0" oninput="calcCash()">
+  <span class="d-eq">=</span>
+  <span class="d-total" id="dt${i}" style="font-weight:600;min-width:60px;text-align:right;font-size:0.85rem">0</span>
+</div>`).join('');
+
+function calcCash(){
+  let cashTotal=0;
+  denoms.forEach((d,i)=>{
+    const q=parseInt(document.getElementById('dn'+i).value)||0;
+    const sub=q*d.v;
+    document.getElementById('dt'+i).textContent=rs(sub);
+    cashTotal+=sub;
+  });
+  document.getElementById('cashSum').textContent=rs(cashTotal);
+
+  const ep=parseFloat(document.getElementById('valEP').value)||0;
+  const jc=parseFloat(document.getElementById('valJC').value)||0;
+  const bk=parseFloat(document.getElementById('valBank').value)||0;
+  const digitalTotal=ep+jc+bk;
+
+  document.getElementById('digitalSum').textContent=rs(digitalTotal);
+
+  const grandTotal=cashTotal+digitalTotal;
+  document.getElementById('grandTotal').textContent=rs(grandTotal);
+
+  // Difference Check
+  const txs=load(K.tx).filter(t=>t.date===today());
+  const sales=txs.filter(t=>t.type==='sale').reduce((s,t)=>s+t.amount,0);
+  const exps=txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const expected=sales-exps;
+
+  document.getElementById('diffCounted').textContent=rs(grandTotal);
+  document.getElementById('diffExpected').textContent=rs(expected);
+
+  const diff=grandTotal-expected;
+  const diffEl=document.getElementById('cashDiff');
+  diffEl.textContent=(diff>=0?'+':'')+rs(diff);
+  diffEl.style.color=diff>=0?'var(--green)':'var(--red)';
+}
+
+// Save Digital Payments -> Add to Sale
+function saveDigital(){
+  const ep=parseFloat(document.getElementById('valEP').value)||0;
+  const jc=parseFloat(document.getElementById('valJC').value)||0;
+  const bk=parseFloat(document.getElementById('valBank').value)||0;
+  const total=ep+jc+bk;
+
+  // Save digital record
+  const data=load(K.dg);
+  const idx=data.findIndex(d=>d.date===today());
+  const entry={date:today(),ep,jc,bk};
+  if(idx>=0)data[idx]=entry;else data.push(entry);
+  save(K.dg,data);
+
+  // Remove old digital sale entries for today before adding new ones (prevents duplicates)
+  let txs=load(K.tx).filter(t=>!(t.date===today()&&t.source==='digital'));
+
+  if(ep>0)txs.unshift({id:Date.now(),type:'sale',amount:ep,note:'EasyPaisa',date:today(),time:new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}),source:'digital'});
+  if(jc>0)txs.unshift({id:Date.now()+1,type:'sale',amount:jc,note:'JazzCash',date:today(),time:new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}),source:'digital'});
+  if(bk>0)txs.unshift({id:Date.now()+2,type:'sale',amount:bk,note:'Bank Transfer',date:today(),time:new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}),source:'digital'});
+
+  save(K.tx,txs);
+
+  if(total>0){
+    toast('Digital '+rs(total)+' added to Sale','ok');
+  }else{
+    toast('Digital payments cleared','inf');
+  }
+  renderHome();
+  calcCash();
+}
+
+function loadDigital(){
+  const d=load(K.dg).find(d=>d.date===today());
+  if(d){
+    document.getElementById('valEP').value=d.ep||'';
+    document.getElementById('valJC').value=d.jc||'';
+    document.getElementById('valBank').value=d.bk||'';
+  }else{
+    document.getElementById('valEP').value='';
+    document.getElementById('valJC').value='';
+    document.getElementById('valBank').value='';
+  }
+}
+
+// ===== CONTACTS =====
+function addContact(){
+  const name=document.getElementById('cName').value.trim();
+  const phone=document.getElementById('cPhone').value.trim();
+  if(!name){toast('Enter name','err');return}
+  if(!phone){toast('Enter phone','err');return}
+  const ct=load(K.ct);
+  if(ct.length>=50){toast('50 limit reached','err');return}
+  ct.push({id:Date.now(),name,phone});
+  save(K.ct,ct);
+  document.getElementById('cName').value='';
+  document.getElementById('cPhone').value='';
+  toast('"'+name+'" saved','ok');
+  showContacts();
+}
+
+function delContact(id){save(K.ct,load(K.ct).filter(c=>c.id!==id));showContacts();toast('Deleted','inf')}
+
+function showContacts(){
+  const ct=load(K.ct);
+  const q=(document.getElementById('cSearch').value||'').toLowerCase();
+  const list=ct.filter(c=>c.name.toLowerCase().includes(q)||c.phone.includes(q));
+  document.getElementById('cCount').textContent=ct.length+' / 50';
+  const el=document.getElementById('cList');
+  if(!list.length){el.innerHTML='<div class="empty"><i class="fas fa-address-book"></i>'+(ct.length?'No match found':'No contacts yet')+'</div>';return}
+  el.innerHTML=list.map(c=>`<div class="ct">
+    <div class="ct-info"><div class="ct-name">${c.name}</div><div class="ct-num">${c.phone}</div></div>
+    <div class="ct-btns">
+      <a class="wa" href="https://wa.me/${c.phone.replace(/^0/,'92')}" target="_blank"><i class="fab fa-whatsapp"></i></a>
+      <a class="ca" href="tel:${c.phone}"><i class="fas fa-phone"></i></a>
+      <button class="de" onclick="delContact(${c.id})"><i class="fas fa-trash"></i></button>
+    </div>
+  </div>`).join('');
+}
+
+// ===== HISTORY =====
+function showHistory(){
+  const txs=load(K.tx);
+  const days={};
+  txs.forEach(t=>{if(!days[t.date])days[t.date]=[];days[t.date].push(t)});
+  // Remove today from history (it's on home page)
+  delete days[today()];
+  const sorted=Object.keys(days).sort().reverse();
+  const el=document.getElementById('hList');
+  if(!sorted.length){el.innerHTML='<div class="empty"><i class="fas fa-calendar"></i>No past days</div>';return}
+  el.innerHTML=sorted.map(date=>{
+    const dt=days[date];
+    const s=dt.filter(t=>t.type==='sale').reduce((a,t)=>a+t.amount,0);
+    const e=dt.filter(t=>t.type==='expense').reduce((a,t)=>a+t.amount,0);
+    const label=new Date(date).toLocaleDateString('en-PK',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+    return `<div class="h-day"><div class="h-date"><i class="fas fa-calendar-day" style="margin-right:4px"></i>${label}</div>
+      <div class="h-row"><span>Sale</span><span class="green" style="font-weight:700">${rs(s)}</span></div>
+      <div class="h-row"><span>Expense</span><span class="red" style="font-weight:700">${rs(e)}</span></div>
+      <div class="h-row"><span>Profit</span><span style="font-weight:700;color:${s-e>=0?'var(--gold)':'var(--red)'}">${rs(s-e)}</span></div>
+    </div>`}).join('');
+}
+
+// ===== PDF =====
+function dlPDF(){
+  const txs=load(K.tx).filter(t=>t.date===today());
+  if(!txs.length){toast('No data today','err');return}
+  const{jsPDF}=window.jspdf;const doc=new jsPDF();
+  const sales=txs.filter(t=>t.type==='sale').reduce((a,t)=>a+t.amount,0);
+  const exps=txs.filter(t=>t.type==='expense').reduce((a,t)=>a+t.amount,0);
+  const d=new Date().toLocaleDateString('en-PK',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  // Header
+  doc.setFillColor(25,25,25);doc.rect(0,0,210,38,'F');
+  doc.setTextColor(240,165,0);doc.setFont('helvetica','bold');doc.setFontSize(20);doc.text('Daily Counter',15,18);
+  doc.setFontSize(10);doc.setTextColor(180,180,180);doc.text('Sale Report - '+d,15,30);
+
+  let y=48;
+  // Summary Box
+  doc.setFillColor(250,247,240);doc.roundedRect(15,y,180,22,3,3,'F');
+  doc.setFontSize(10);doc.setFont('helvetica','bold');
+  doc.setTextColor(46,204,113);doc.text('Total Sale: Rs '+sales.toLocaleString(),22,y+9);
+  doc.setTextColor(231,76,60);doc.text('Total Expense: Rs '+exps.toLocaleString(),22,y+18);
+  doc.setTextColor(240,165,0);doc.setFontSize(12);
+  doc.text('Net Profit: Rs '+(sales-exps).toLocaleString(),120,y+13);
+  y+=30;
+
+  // Table Header
+  doc.setFillColor(40,40,40);doc.rect(15,y,180,8,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(7.5);doc.setFont('helvetica','bold');
+  doc.text('TIME',18,y+5.5);doc.text('TYPE',40,y+5.5);doc.text('DETAIL',60,y+5.5);doc.text('AMOUNT (Rs)',165,y+5.5);
+  y+=10;
+
+  // Rows
+  doc.setFont('helvetica','normal');doc.setFontSize(8);
+  txs.forEach(t=>{
+    if(y>275){doc.addPage();y=15}
+    const isSale=t.type==='sale';
+    if(isSale){doc.setTextColor(46,204,113);doc.text('SALE',40,y+3)}
+    else{doc.setTextColor(231,76,60);doc.text('EXPENSE',40,y+3)}
+    doc.setTextColor(100,100,100);doc.text(t.time||'',18,y+3);
+    doc.setTextColor(50,50,50);doc.text((t.note||'').substring(0,35),60,y+3);
+    doc.setFont('helvetica','bold');
+    if(isSale){doc.setTextColor(46,204,113);doc.text('+Rs '+t.amount.toLocaleString(),165,y+3)}
+    else{doc.setTextColor(231,76,60);doc.text('-Rs '+t.amount.toLocaleString(),165,y+3)}
+    doc.setFont('helvetica','normal');
+    y+=7;
+  });
+
+  // Footer
+  doc.setFontSize(7);doc.setTextColor(160,160,160);
+  doc.text('Generated by Daily Counter App | '+d,105,290,{align:'center'});
+
+  doc.save('DailyReport_'+today()+'.pdf');
+  toast('PDF downloaded','ok');
+}
+
+// ===== INIT =====
+renderHome();
+showContacts();
+</script>
+</body>
+</html>
